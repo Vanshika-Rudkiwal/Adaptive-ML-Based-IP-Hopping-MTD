@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+
+# Backup files
+*_backup.py
+
+# Logs
+run.log
+*.log
+
+# Raw CICIDS2017 dataset files (download separately — see README)
+*.pcap_ISCX.csv
+
+# Large derived/intermediate data (regenerate via src/data_prep — see README)
+cicids2017_portscan_clean_v2.csv
+cicids2017_portscan_step1_clean.csv
+
+# Combined code dump (redundant with tracked source files)
+all_code_dump.txt
+
+# OS/editor artifacts
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+venv-ml/
+venv-mtd/
+.venv/
+
+# Python artifacts
+*.pkl

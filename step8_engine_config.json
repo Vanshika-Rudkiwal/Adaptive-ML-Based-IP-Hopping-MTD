@@ -1,0 +1,27 @@
+{
+  "t_min": 5.0,
+  "t_max": 300.0,
+  "tiers": {
+    "NORMAL": [
+      0.0,
+      0.25
+    ],
+    "ELEVATED": [
+      0.25,
+      0.5
+    ],
+    "HIGH": [
+      0.5,
+      0.75
+    ],
+    "CRITICAL": [
+      0.75,
+      1.01
+    ]
+  },
+  "ewma_alpha": 0.4,
+  "hysteresis_band": 0.05,
+  "max_step_change_frac": 0.5,
+  "min_dwell_seconds": 5.0,
+  "decay_steepness": 4.0
+}

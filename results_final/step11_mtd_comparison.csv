@@ -1,0 +1,8 @@
+attacker_strategy,metric,static_mean,static_std,adaptive_mean,adaptive_std
+pool_sweep,Attacker hit rate,1.0,0.0,1.0,0.0
+pool_sweep,Attacker mean ports/attempt,1.0,0.0,1.0,0.0
+pool_sweep,Attacker time-to-first-hit (s),0.0,0.0,0.0,0.0
+rescan_last_known,Attacker hit rate,1.0,0.0,0.20689655172413796,2.7755575615628914e-17
+rescan_last_known,Attacker mean ports/attempt,1.0,0.0,0.20689655172413796,2.7755575615628914e-17
+rescan_last_known,Attacker time-to-first-hit (s),0.0,0.0,0.0,0.0
+n/a,Legit client success rate,1.0,0.0,1.0,0.0
