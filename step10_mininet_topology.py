@@ -419,13 +419,34 @@ def run_attacker_rescan(h1, mode, results, h1_lock):
         print(repr(out))
         print("================================================")
         elapsed = time.time() - attempt_start
-        hit = "open" in out
+        service_found = "open" in out
         ports_found = out.count("open")
+
+        # Evaluator-only check: compare remembered IP with VIP active
+        # when this scan finishes. The attacker never receives this value.
+        try:
+            resp = requests.get(
+                f"http://{CONTROLLER_IP}:{CONTROLLER_REST_PORT}/mtd/current_vip",
+                headers={"X-MTD-Key": MTD_API_KEY}, timeout=2,
+            )
+            resp.raise_for_status()
+            active_vip_at_scan_end = resp.json().get("vip")
+        except Exception as e:
+            active_vip_at_scan_end = None
+            log(f"Evaluator: current VIP lookup failed ({e})")
+
+        hit = (
+            service_found
+            and active_vip_at_scan_end is not None
+            and known_vip == active_vip_at_scan_end
+        )
 
         results.append({
             "mode": mode, "role": "attacker", "attacker_strategy": "rescan_last_known",
-            "attempt": attempt, "timestamp": attempt_start, "target_ip": known_vip,
-            "hit": hit, "ports_found": ports_found, "scan_duration_s": elapsed,
+            "attempt": attempt, "timestamp": attempt_start + elapsed, "target_ip": known_vip,
+            "active_vip_at_scan_end": active_vip_at_scan_end,
+            "service_found": service_found, "hit": hit,
+            "ports_found": ports_found, "scan_duration_s": elapsed,
         })
         log(f"Attacker (rescan) attempt {attempt}: target={known_vip} hit={hit} "
             f"ports_found={ports_found} duration={elapsed:.2f}s")
@@ -460,12 +481,32 @@ def run_attacker_sweep(h1, mode, results, h1_lock):
         print("================================================")
         elapsed = time.time() - attempt_start
         live_ip = _extract_first_live_ip(out)
-        hit = live_ip is not None and "open" in out
         ports_found = out.count("open")
+
+        # Evaluator-only check: compare discovery with the VIP active
+        # when the scan finishes. The attacker never receives this value.
+        try:
+            resp = requests.get(
+                f"http://{CONTROLLER_IP}:{CONTROLLER_REST_PORT}/mtd/current_vip",
+                headers={"X-MTD-Key": MTD_API_KEY}, timeout=2,
+            )
+            resp.raise_for_status()
+            active_vip_at_scan_end = resp.json().get("vip")
+        except Exception as e:
+            active_vip_at_scan_end = None
+            log(f"Evaluator: current VIP lookup failed ({e})")
+
+        hit = (
+            live_ip is not None
+            and active_vip_at_scan_end is not None
+            and live_ip == active_vip_at_scan_end
+            and ports_found > 0
+        )
 
         results.append({
             "mode": mode, "role": "attacker", "attacker_strategy": "pool_sweep",
-            "attempt": attempt, "timestamp": attempt_start, "target_ip": live_ip,
+            "attempt": attempt, "timestamp": attempt_start + elapsed, "target_ip": live_ip,
+            "active_vip_at_scan_end": active_vip_at_scan_end,
             "hit": hit, "ports_found": ports_found, "scan_duration_s": elapsed,
         })
         log(f"Attacker (sweep) attempt {attempt}: found={live_ip} hit={hit} "
