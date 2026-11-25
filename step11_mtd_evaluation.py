@@ -225,22 +225,63 @@ def compare(static_atk_summaries, adaptive_atk_summaries, static_legit, adaptive
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
-        plot_df = comp_df[comp_df["metric"].isin(["Attacker hit rate", "Legit client success rate"])]
-        fig, ax = plt.subplots(figsize=(9, 5))
-        labels = (plot_df["attacker_strategy"] + " / " + plot_df["metric"]).tolist()
-        x = np.arange(len(plot_df))
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+        strategies = ["pool_sweep", "rescan_last_known"]
+        labels = ["Full pool sweep", "Last-known IP rescan"]
+        x = np.arange(2)
         width = 0.35
-        ax.bar(x - width/2, plot_df["static_mean"], width, yerr=plot_df["static_std"],
-               label="static", capsize=3)
-        ax.bar(x + width/2, plot_df["adaptive_mean"], width, yerr=plot_df["adaptive_std"],
-               label="adaptive", capsize=3)
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=20, ha="right", fontsize=8)
-        ax.set_ylabel("Rate")
-        ax.set_title("MTD Effectiveness: Static vs Adaptive (mean +/- std over trials)")
-        ax.legend()
+
+        for mode, offset, color in [
+            ("static", -width/2, "steelblue"),
+            ("adaptive", width/2, "darkorange")
+        ]:
+            values = []
+            for strategy in strategies:
+                row = comp_df[
+                    (comp_df["attacker_strategy"] == strategy) &
+                    (comp_df["metric"] == "Attacker hit rate")
+                ].iloc[0]
+                values.append(row[f"{mode}_mean"])
+
+            axes[0].bar(x + offset, values, width, label=mode)
+
+        counts = {
+            "static": ["90/90", "145/145"],
+            "adaptive": ["90/90", "30/140"]
+        }
+        for i in range(2):
+            axes[0].text(x[i]-width/2, 1.02, counts["static"][i],
+                         ha="center", fontsize=8)
+            axes[0].text(x[i]+width/2, 1.02, counts["adaptive"][i],
+                         ha="center", fontsize=8)
+
+        axes[0].set_xticks(x)
+        axes[0].set_xticklabels(labels)
+        axes[0].set_ylim(0, 1.18)
+        axes[0].set_ylabel("Attacker hit rate")
+        axes[0].set_title("Attacker Hit Rate (lower is better)")
+        axes[0].legend()
+
+        legit = comp_df[
+            comp_df["metric"] == "Legit client success rate"
+        ].iloc[0]
+
+        vals = [legit["static_mean"], legit["adaptive_mean"]]
+        bars = axes[1].bar(["Static", "Adaptive"], vals,
+                           color=["steelblue", "darkorange"])
+        for bar, label in zip(bars, ["300/300", "299/300"]):
+            axes[1].text(bar.get_x() + bar.get_width()/2,
+                         bar.get_height() + 0.01, label,
+                         ha="center", fontsize=9)
+
+        axes[1].set_ylim(0, 1.15)
+        axes[1].set_ylabel("Success rate")
+        axes[1].set_title("Legitimate Client Success (higher is better)")
+
+        fig.suptitle("Static vs Adaptive MTD — 5 simulated trials")
         plt.tight_layout()
-        plt.savefig("step11_mtd_comparison.png", dpi=150)
+        plt.savefig("step11_mtd_comparison.png", dpi=180)
         plt.close()
         log("Saved: step11_mtd_comparison.png")
     except ImportError:
